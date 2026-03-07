@@ -1,21 +1,27 @@
-import express, {
-  type Application,
-  type Request,
-  type Response,
-} from "express";
+import { Server } from "http";
+import app from "./app.js";
+import { PrismaClient } from "@prisma/client";
 
-const app: Application = express();
-const PORT = 5000;
+// Singleton logic to prevent connection leaks during 'tsx watch'
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+export const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-app.get("/", (req: Request, res: Response) => {
-  console.log("Hello with pnpm and Typescript!");
-  res.send("Trust Wall Server is Running!");
-});
+let server: Server;
 
-app.get("/api", (req: Request, res: Response) => {
-  res.send("I can do this all day💪");
-});
+async function startServer() {
+  try {
+    // 1. Connect to PostgreSQL
+    await prisma.$connect();
+    console.log("🐘 Database connected successfully!");
 
-app.listen(PORT, () => {
-  console.log(`Server is running on PORT: ${PORT}`);
-});
+    // 2. Start the Express Server
+    server = app.listen(5000, () => {
+      console.log(`🚀 Server is running on port 5000`);
+    });
+  } catch (err) {
+    console.error("❌ Failed to connect to the database:", err);
+    process.exit(1);
+  }
+}
+startServer();
