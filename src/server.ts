@@ -1,27 +1,59 @@
-import { Server } from "http";
+import "dotenv/config"; // Top-level
 import app from "./app.js";
-import { PrismaClient } from "@prisma/client";
-
-// Singleton logic to prevent connection leaks during 'tsx watch'
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
-export const prisma = globalForPrisma.prisma || new PrismaClient();
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+import prisma from "./app/utils/prisma.js";
+import { Server } from "http";
 
 let server: Server;
 
-async function startServer() {
+const startServer = async () => {
   try {
-    // 1. Connect to PostgreSQL
     await prisma.$connect();
-    console.log("🐘 Database connected successfully!");
+    console.log("🐘 Database connected successfully with Prisma 7!");
 
-    // 2. Start the Express Server
     server = app.listen(5000, () => {
-      console.log(`🚀 Server is running on port 5000`);
+      console.log("🚀 Server running on port 5000");
     });
-  } catch (err) {
-    console.error("❌ Failed to connect to the database:", err);
+  } catch (error) {
+    console.error("❌ DB Connection Error:", error);
     process.exit(1);
   }
-}
+};
+
 startServer();
+
+process.on("uncaughtException", (err) => {
+  console.log("Uncaught Exception error, Shutting down the server...", err);
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
+
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.log("Unhandled Rejection Detected Server Shutting down...", err);
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
+  process.exit(1);
+});
+
+process.on("SIGTERM", (err) => {
+  console.log("SIGTERM signal received. Server shutting down...");
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
+  process.exit(1);
+});
+
+/**
+ * uncaught (Synchronous) error
+ * unhandled (Asynchronous) error error if we don't handle using try/catch
+ * sigterm Not actual error but not force to kill the server
+ */
