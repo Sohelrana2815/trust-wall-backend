@@ -6,18 +6,80 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+enum Role {
+  ADMIN
+  CREATOR
+  REVIEWER
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id])
-  authorId  Int
+enum AuthProvider {
+  GOOGLE
+  LINKEDIN
+  CREDENTIALS // For email/password based login
+}
+
+// USER MODEL
+model User {
+  id       String         @id @default(cuid())
+  name     String
+  email    String         @unique
+  password String? // Optional for social login
+  image    String? // User Profile picture
+  role     Role           @default(CREATOR)
+  provider AuthProvider[] // Tracks which methods like (Google, LinkedIn, Email/Password) the user has used
+
+  // Relations
+  ownedSpaces  Space[]  @relation("SpaceOwner")
+  reviewsGiven Review[] @relation("ReviewerIdentity")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// SPACE MODEL
+
+model Space {
+  id                String  @id @default(cuid())
+  name              String
+  slug              String  @unique // sohel-design;
+  headerTitle       String
+  headerDescription String?
+  logoUrl           String?
+  isPublished       Boolean @default(true)
+
+  // Relations
+
+  ownerId   String
+  owner     User     @relation("SpaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  reviews   Review[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// REVIEW MODEL (The Testimonials)
+
+model Review {
+  id               String  @id @default(cuid())
+  rating           Int     @default(5)
+  comment          String  @db.VarChar(800)
+  isApproved       Boolean @default(false) // Need to approved by the creator
+  isVerifiedClient Boolean @default(false) // Logic for LinkedIn/Toke auth
+
+  // Reviewer Metadata (Captured from Social Auth)
+
+  reviewerName       String
+  reviewerEmail      String
+  reviewerImage      String?
+  reviewerSocialLink String?
+
+  // Relations
+
+  spaceId    String
+  space      Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User     @relation("ReviewerIdentity", fields: [reviewerId], references: [id])
+  createdAt  DateTime @default(now())
+
+  // THE FIX:  This prevents the same user from reviewing the same space twice
+  @@unique([reviewerId, spaceId])
 }
