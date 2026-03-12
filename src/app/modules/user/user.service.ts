@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/modules/user/user.service.ts
 
 import prisma from "../../utils/prisma.js";

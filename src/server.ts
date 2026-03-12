@@ -1,7 +1,9 @@
+/* eslint-disable no-console */
 import "dotenv/config"; // Top-level
 import app from "./app.js";
 import prisma from "./app/utils/prisma.js";
 import { Server } from "http";
+import { envVars } from "./app/config/env.js";
 
 let server: Server;
 
@@ -10,7 +12,7 @@ const startServer = async () => {
     await prisma.$connect();
     console.log("🐘 Database connected successfully with Prisma 7!");
 
-    server = app.listen(5000, () => {
+    server = app.listen(envVars.PORT, () => {
       console.log("🚀 Server running on port 5000");
     });
   } catch (error) {
@@ -42,7 +44,7 @@ process.on("unhandledRejection", (err) => {
   process.exit(1);
 });
 
-process.on("SIGTERM", (err) => {
+process.on("SIGTERM", () => {
   console.log("SIGTERM signal received. Server shutting down...");
   if (server) {
     server.close(() => {

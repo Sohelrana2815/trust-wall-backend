@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
-import "dotenv/config";
+import { envVars } from "../config/env.js";
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = envVars.DATABASE_URL;
 
 const prismaClientSingleton = () => {
   // ১. PostgreSQL পুল তৈরি করা
