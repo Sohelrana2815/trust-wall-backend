@@ -72,7 +72,7 @@ model Review {
   reviewerImage      String?
   reviewerSocialLink String?
 
-  // Relations
+  // Relations .
 
   spaceId    String
   space      Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
