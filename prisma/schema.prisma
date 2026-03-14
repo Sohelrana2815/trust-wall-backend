@@ -42,8 +42,8 @@ model Space {
   id                String  @id @default(cuid())
   name              String
   slug              String  @unique // sohel-design;
-  headerTitle       String
-  headerDescription String?
+  title       String
+  description String?
   logoUrl           String?
   isPublished       Boolean @default(true)
 
@@ -63,14 +63,14 @@ model Review {
   rating           Int     @default(5)
   comment          String  @db.VarChar(800)
   isApproved       Boolean @default(false) // Need to approved by the creator
-  isVerifiedClient Boolean @default(false) // Logic for LinkedIn/Toke auth
+  isVerifiedClient Boolean @default(false) // Logic for LinkedIn/Token auth
 
   // Reviewer Metadata (Captured from Social Auth)
 
   reviewerName       String
   reviewerEmail      String
   reviewerImage      String?
-  reviewerSocialLink String?
+  reviewerProfileUrl String?
 
   // Relations .
 
